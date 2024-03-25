@@ -1,3 +1,7 @@
+[General]
+last-configname=CustomExecution
+last-runnumber=0
+
 [RunModeProfiles]
 run-playback-speed=1
 run-min-playback-speed=0.01
@@ -9,7 +13,3 @@ fast-min-playback-speed=1
 fast-max-playback-speed=1e+06
 fast-min-animation-speed=nan
 fast-max-animation-speed=nan
-
-[General]
-last-configname=CustomExecution
-last-runnumber=0
