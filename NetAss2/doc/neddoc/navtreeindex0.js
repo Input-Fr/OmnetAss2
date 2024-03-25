@@ -1,0 +1,16 @@
+var NAVTREEINDEX0 = {
+'../../doc/doxy/annotated.html':[6, 1],
+'../../doc/doxy/files.html':[6, 0],
+'../../doc/doxy/functions.html':[6, 3],
+'../../doc/doxy/globals.html':[6, 4],
+'../../doc/doxy/hierarchy.html':[6, 2],
+'index.html':[0],
+'namespaces.html':[4],
+'ned.DatarateChannel.html':[1, 0, 0],
+'ned.DelayChannel.html':[1, 0, 1],
+'ned.IBidirectionalChannel.html':[1, 0, 2],
+'ned.IUnidirectionalChannel.html':[1, 0, 4],
+'ned.IdealChannel.html':[1, 0, 3],
+'packages.html':[1],
+'packages.html#ned':[1, 0],
+};

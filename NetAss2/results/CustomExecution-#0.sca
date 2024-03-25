@@ -1,0 +1,23 @@
+version 3
+run CustomExecution-0-20240324-10:35:53-8860
+attr configname CustomExecution
+attr datetime 20240324-10:35:53
+attr datetimef 20240324-103553
+attr experiment CustomExecution
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network Network
+attr processid 8860
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config network Network
+config **.topoFile "\"topo.txt\""
+
+par Network typename "\"Network\""
+
