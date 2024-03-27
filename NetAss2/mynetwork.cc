@@ -72,7 +72,7 @@ void Node::initialize()
             n = entry.value;
     }
 
-    std::vector<int> shuffledNumbers = generateAndShuffle(n);
+    std::vector<int> shuffledNumbers = generateAndShuffle(n-1);
 
     // am I a client ?
     if (std::string(getName()).find("client") != std::string::npos) {
