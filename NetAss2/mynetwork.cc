@@ -116,5 +116,44 @@ void Node::initialize()
 void Node::handleMessage(cMessage *msg)
 {
     // The handleMessage() method is called whenever a message arrives at the module.
-    //send(msg, "out");
+
+    // am I a server ?
+    if (std::string(getName()).find("server") != std::string::npos) {
+        // Seed the random number generator
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        // define the distribution for real numbers between 0 and 1
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+        // generate a random number between 0 and 1
+        double random_number = dist(gen);
+
+        // true if malicious
+        bool malicious = random_number < 0.25;
+        cMessage *answer;
+        if (malicious){
+            answer = new cMessage("Je suis un farfadet rempli de malices");
+        }
+        else
+        {
+            answer = new cMessage("Je suis un farfadet honnête✅✅✅✅✅");
+        }
+        // get the pointer to the sender module
+        cModule *senderModule = msg->getSenderModule();
+        cGate *serverGate = nullptr;
+
+        // iterate through gates of the client module
+        for (int j = 0; j < gateSize("gate$o"); j++) {
+            cGate *gate = this->gate("gate$o", j);
+
+            if (gate->getType() == cGate::OUTPUT && gate->getPathEndGate()->getOwnerModule() == senderModule) {
+                serverGate = gate;
+                break;
+            }
+        }
+
+        // Send the message back to the sender module
+        send(answer, serverGate);
+    }
 }
