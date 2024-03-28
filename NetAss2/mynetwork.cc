@@ -23,6 +23,9 @@ class Node : public cSimpleModule
 
     // Store connections to hosts
     std::map<std::string, cModule*> hostConnections;
+
+private:
+    int receivedresponse;
 };
 
 // The module class needs to be registered with OMNeT++
@@ -107,14 +110,62 @@ void Node::initialize()
         }
     }
     else {
-        // i am a server
+        // i am a client
+        // put the received messages to 0
     }
 
 
 }
+std::vector<int> maxValues;
 
 void Node::handleMessage(cMessage *msg)
 {
-    // The handleMessage() method is called whenever a message arrives at the module.
-    //send(msg, "out");
+    if (std::string(msg->getSenderModule()->getName()).find("server") != std::string::npos) {
+        // i am a server
+        std::string Message = msg->getName();
+
+    }
+    else {
+        // i am a client
+        std::cout << "Client received message: " << msg->getName() << std::endl;
+        maxValues.push_back(std::stoi(msg->getName()));
+        if (maxValues.size() == n)
+        {
+            SendScore(maxValues);
+        }
+    }
+}
+
+
+void SendScore(std::vector<bool> maxvector)
+{
+    //iterate through the maxValues vector and print the majority element
+    int count = 1;
+    int majority = maxValues[0];
+    for (int i = 1; i < n; i++)
+    {
+        if (maxValues[i] == majority)
+            count++;
+        else
+            count--;
+        if (count == 0)
+        {
+            majority = maxValues[i];
+            count = 1;
+        }
+    }
+    //for each client send if the server i is reliable or not
+    for (int i = 0; i < n; i++)
+    {
+        if (maxValues[i] == majority)
+        {
+            cMessage *msg = new cMessage("1");
+            send(msg, "gate$o", i);
+        }
+        else
+        {
+            cMessage *msg = new cMessage("0");
+            send(msg, "gate$o", i);
+        }
+    }
 }
