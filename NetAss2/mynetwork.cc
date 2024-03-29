@@ -23,9 +23,6 @@ class Node : public cSimpleModule
 
     // Store connections to hosts
     std::map<std::string, cModule*> hostConnections;
-
-private:
-    int receivedresponse;
 };
 
 // The module class needs to be registered with OMNeT++
@@ -110,62 +107,53 @@ void Node::initialize()
         }
     }
     else {
-        // i am a client
-        // put the received messages to 0
+        // i am a server
     }
 
 
 }
-std::vector<int> maxValues;
 
 void Node::handleMessage(cMessage *msg)
 {
-    if (std::string(msg->getSenderModule()->getName()).find("server") != std::string::npos) {
-        // i am a server
-        std::string Message = msg->getName();
+    // The handleMessage() method is called whenever a message arrives at the module.
 
-    }
-    else {
-        // i am a client
-        std::cout << "Client received message: " << msg->getName() << std::endl;
-        maxValues.push_back(std::stoi(msg->getName()));
-        if (maxValues.size() == n)
-        {
-            SendScore(maxValues);
-        }
-    }
-}
+    // am I a server ?
+    if (std::string(getName()).find("server") != std::string::npos) {
+        // Seed the random number generator
+        std::random_device rd;
+        std::mt19937 gen(rd());
 
+        // define the distribution for real numbers between 0 and 1
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
 
-void SendScore(std::vector<bool> maxvector)
-{
-    //iterate through the maxValues vector and print the majority element
-    int count = 1;
-    int majority = maxValues[0];
-    for (int i = 1; i < n; i++)
-    {
-        if (maxValues[i] == majority)
-            count++;
-        else
-            count--;
-        if (count == 0)
-        {
-            majority = maxValues[i];
-            count = 1;
-        }
-    }
-    //for each client send if the server i is reliable or not
-    for (int i = 0; i < n; i++)
-    {
-        if (maxValues[i] == majority)
-        {
-            cMessage *msg = new cMessage("1");
-            send(msg, "gate$o", i);
+        // generate a random number between 0 and 1
+        double random_number = dist(gen);
+
+        // true if malicious
+        bool malicious = random_number < 0.25;
+        cMessage *answer;
+        if (malicious){
+            answer = new cMessage("Je suis un farfadet rempli de malices");
         }
         else
         {
-            cMessage *msg = new cMessage("0");
-            send(msg, "gate$o", i);
+            answer = new cMessage("Je suis un farfadet honnête✅✅✅✅✅");
         }
+        // get the pointer to the sender module
+        cModule *senderModule = msg->getSenderModule();
+        cGate *serverGate = nullptr;
+
+        // iterate through gates of the client module
+        for (int j = 0; j < gateSize("gate$o"); j++) {
+            cGate *gate = this->gate("gate$o", j);
+
+            if (gate->getType() == cGate::OUTPUT && gate->getPathEndGate()->getOwnerModule() == senderModule) {
+                serverGate = gate;
+                break;
+            }
+        }
+
+        // Send the message back to the sender module
+        send(answer, serverGate);
     }
 }
