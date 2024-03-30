@@ -23,6 +23,10 @@ class Node : public cSimpleModule
 
     // Store connections to hosts
     std::map<std::string, cModule*> hostConnections;
+private:
+    int totalServers;  // Nombre total de serveurs
+    int receivedResponses;  // Compteur pour les réponses reçues
+    std::vector<int> maxValues;  // Pour stocker les valeurs maximales reçues des serveurs
 };
 
 // The module class needs to be registered with OMNeT++
@@ -48,7 +52,7 @@ void Node::initialize()
 {
     // Initialize is called at the beginning of the simulation.
     //retrieve nb of server
-    int n = 0;
+    int n = 100;
     std::ifstream file("topo.txt");
     if (!file.is_open()) {
         std::cerr << "Unable to open file" << std::endl;
@@ -71,6 +75,9 @@ void Node::initialize()
         if (entry.type == "serverNode")
             n = entry.value;
     }
+
+    totalServers = n; // number of servers
+    receivedResponses = 0;  // Initialize the counter for the number of responses received
 
     std::vector<int> shuffledNumbers = generateAndShuffle(n-1);
 
@@ -105,6 +112,21 @@ void Node::initialize()
             cMessage *msg = new cMessage("wassup bro");
             send(msg, serverGate);
         }
+
+        std::vector<int> list = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};  // Exemple de liste
+        int partSize = list.size() / 5; // cut the list into 5 parts
+        std::vector<int> partToSend(list.begin(), list.begin() + partSize);
+
+        for (int i = 0; i < totalServers; i++) {
+            std::string serverName = "server" + std::to_string(i + 1);
+            cModule *serverModule = getParentModule()->getSubmodule(serverName.c_str());
+            cGate *gate = gate("gate$o", i);
+
+            // create a message to send to the server
+            cMessage *msg = new cMessage("listPart");
+            msg->setContextPointer(new std::vector<int>(partToSend));
+            send(msg, gate);
+        }
     }
     else {
         // i am a server
@@ -119,6 +141,19 @@ void Node::handleMessage(cMessage *msg)
 
     // am I a server ?
     if (std::string(getName()).find("server") != std::string::npos) {
+        int maxValue = std::stoi(msg->getName());
+        maxValues.push_back(maxValue);
+        receivedResponses++;
+
+        // Check if all responses have been received
+        if (receivedResponses == totalServers) {
+            std::cout << "Toutes les réponses ont été reçues." << std::endl;
+
+            // Print all the max values stored
+            for (int val : maxValues) {
+                std::cout << "Valeur maximale reçue: " << val << std::endl;
+            }
+
         // Seed the random number generator
         std::random_device rd;
         std::mt19937 gen(rd());
