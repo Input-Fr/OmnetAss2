@@ -76,7 +76,7 @@ void Node::initialize()
             n = entry.value;
     }
 
-    totalServers = n; // number of servers
+    totalServers = n/2 + 1; // number of servers
     receivedResponses = 0;  // Initialize the counter for the number of responses received
 
     std::vector<int> shuffledNumbers = generateAndShuffle(n-1);
