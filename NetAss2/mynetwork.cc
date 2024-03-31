@@ -82,7 +82,8 @@ void Node::initialize()
     std::vector<int> shuffledNumbers = generateAndShuffle(n-1);
 
     // am I a client ?
-    if (std::string(getName()).find("client") != std::string::npos) {
+    if (std::string(getName()).find("client") != std::string::npos)
+    {
         // i am a client
         for(int i = 0; i < n/2+1; i++)
         {
@@ -141,18 +142,6 @@ void Node::handleMessage(cMessage *msg)
 
     // am I a server ?
     if (std::string(getName()).find("server") != std::string::npos) {
-        int maxValue = std::stoi(msg->getName());
-        maxValues.push_back(maxValue);
-        receivedResponses++;
-
-        // Check if all responses have been received
-        if (receivedResponses == totalServers) {
-            std::cout << "Toutes les réponses ont été reçues." << std::endl;
-
-            // Print all the max values stored
-            for (int val : maxValues) {
-                std::cout << "Valeur maximale reçue: " << val << std::endl;
-            }
 
         // Seed the random number generator
         std::random_device rd;
@@ -190,5 +179,45 @@ void Node::handleMessage(cMessage *msg)
 
         // Send the message back to the sender module
         send(answer, serverGate);
+    }
+    else {
+        std::string senderName = msg->getSenderModule()->getName();
+        int receivedValue = std::stoi(msg->getName());
+
+        // Stocker la valeur reçue dans une structure qui relie le serveur à ses valeurs
+        serverValues[senderName].push_back(receivedValue);
+
+        receivedResponses++;
+
+        // Vérifier si toutes les réponses ont été reçues
+        if (receivedResponses == totalServers * expectedResponsesPerServer) {
+            std::cout << "All responses have been received" << std::endl;
+
+            // Évaluer le fonctionnement de chaque serveur
+            for (const auto &server: serverValues) {
+                int correctCount = std::count_if(server.second.begin(), server.second.end(),
+                                                 [expectedValue](int value) { return value == expectedValue; });
+
+                // Supposons que si la majorité des réponses est correcte, alors le serveur fonctionne bien
+                if (correctCount > server.second.size() / 2) {
+                    std::cout << server.first << " fonctionne bien" << std::endl;
+                    serverStatus[server.first] = true;
+                } else {
+                    std::cout << server.first << " ne fonctionne pas correctement" << std::endl;
+                    serverStatus[server.first] = false;
+                }
+            }
+
+            // notify the clients
+            for (int i = 0; i < getParentModule()->getNumSubmodules(); i++) {
+                cModule *submodule = getParentModule()->getSubmoduleAt(i);
+                if (std::string(submodule->getName()).find("client") != std::string::npos && submodule != this) {
+                    // Send a notification to each client
+                    std::string statusMessage = "Server status: ...";  // Construct the status message
+                    cMessage *notifMsg = new cMessage(statusMessage.c_str());
+                    send(notifMsg, "gate$o");
+                }
+            }
+        }
     }
 }
