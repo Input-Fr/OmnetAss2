@@ -190,7 +190,7 @@ void Node::handleMessage(cMessage *msg)
         receivedResponses++;
 
         // Vérifier si toutes les réponses ont été reçues
-        if (receivedResponses == totalServers * expectedResponsesPerServer) {
+        if (receivedResponses == totalServers) {
             std::cout << "All responses have been received" << std::endl;
 
             // Évaluer le fonctionnement de chaque serveur
