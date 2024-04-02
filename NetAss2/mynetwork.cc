@@ -23,6 +23,9 @@ class Node : public cSimpleModule
 
     // Store connections to hosts
     std::map<std::string, cModule*> hostConnections;
+    std::vector<std::pair<int, std::string>> maxValues;
+    int totalServers;
+    int receivedResponses = 0;
 
     std::vector<int> shuffledNumbers;
 
@@ -107,6 +110,8 @@ void Node::initialize()
 
     // Keep only the first n/2 + 1 elements
     shuffledNumbers.resize(n / 2 + 1);
+    //TODO maybe change the value of the totalServers
+    totalServers = n / 2 + 1;
 
     std::list<int> myList = {10, 20, 30, 40, 50};
     int m = n; // nb of server to begin
@@ -228,5 +233,60 @@ void Node::handleMessage(cMessage *msg)
 
         // Send the message back to the sender module
         send(answer, serverGate);
+    }
+    else
+    {
+        int receivedMax = std::stoi(msg->getName());
+        std::string senderName = msg->getSenderModule()->getName();
+        maxValues.push_back(std::make_pair(receivedMax, senderName));
+
+        receivedResponses++;
+        std::cout << receivedResponses << std::endl;
+
+        // Vérifiez si toutes les réponses ont été reçues
+        if (receivedResponses == totalServers) {
+            std::cout << "All maximum values have been received." << std::endl;
+
+            // Determine the majority value among the max values
+            std::map<int, int> counts;
+            for (const auto& maxVal : maxValues) {
+                counts[maxVal.first]++;  // Increment the count for this max value
+            }
+
+            int majorityValue = maxValues[0].first;  // Default to the first value
+            int maxCount = 0;
+            for (const auto& count : counts) {
+                if (count.second > maxCount) {
+                    majorityValue = count.first;
+                    maxCount = count.second;
+                }
+            }
+
+            std::stringstream ss;
+            for (const auto& maxVal : maxValues) {
+                if (maxVal.first != majorityValue) {
+                    ss << maxVal.second << ",";
+                }
+            }
+            std::string nonMajorityServers = ss.str();
+            if (!nonMajorityServers.empty()) {
+                nonMajorityServers.pop_back(); // Suppress the last comma
+            }
+
+            std::cout << "Majority value: " << nonMajorityServers << std::endl;
+
+            for (int j = 0; j < gateSize("gate$o"); j++) {
+                cGate *gate = this->gate("gate$o", j);
+
+                if (gate->getType() == cGate::OUTPUT &&
+                    std::string(gate->getPathEndGate()->getOwnerModule()->getName()).find("client") != std::string::npos)
+                {
+                    cMessage *msg = new cMessage(nonMajorityServers.c_str());
+                    send(msg, gate);
+                }
+            }
+
+            // additional code
+        }
     }
 }
