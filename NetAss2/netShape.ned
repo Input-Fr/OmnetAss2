@@ -15,16 +15,16 @@ network Network
             delay = 100ms;
         }
         submodules:
-        server0 : Node {
+        serverMalicious0 : Node {
             @display("p=50,70");
         }
         server1 : Node {
             @display("p=50,120");
         }
-        serverMalicious2 : Node {
+        server2 : Node {
             @display("p=50,170");
         }
-        serverMalicious3 : Node {
+        server3 : Node {
             @display("p=50,220");
         }
         server4 : Node {
@@ -36,7 +36,7 @@ network Network
         server6 : Node {
             @display("p=50,370");
         }
-        server7 : Node {
+        serverMalicious7 : Node {
             @display("p=50,420");
         }
         server8 : Node {
@@ -48,15 +48,29 @@ network Network
         client0 : Node {
             @display("p=250,70");
         }
+        client1 : Node {
+            @display("p=250,120");
+        }
     connections:
-        client0.gate++ <--> Channel <--> server0.gate++;
+        client0.gate++ <--> Channel <--> client1.gate++;
+        client0.gate++ <--> Channel <--> serverMalicious0.gate++;
         client0.gate++ <--> Channel <--> server1.gate++;
-        client0.gate++ <--> Channel <--> serverMalicious2.gate++;
-        client0.gate++ <--> Channel <--> serverMalicious3.gate++;
+        client0.gate++ <--> Channel <--> server2.gate++;
+        client0.gate++ <--> Channel <--> server3.gate++;
         client0.gate++ <--> Channel <--> server4.gate++;
         client0.gate++ <--> Channel <--> server5.gate++;
         client0.gate++ <--> Channel <--> server6.gate++;
-        client0.gate++ <--> Channel <--> server7.gate++;
+        client0.gate++ <--> Channel <--> serverMalicious7.gate++;
         client0.gate++ <--> Channel <--> server8.gate++;
         client0.gate++ <--> Channel <--> server9.gate++;
+        client1.gate++ <--> Channel <--> serverMalicious0.gate++;
+        client1.gate++ <--> Channel <--> server1.gate++;
+        client1.gate++ <--> Channel <--> server2.gate++;
+        client1.gate++ <--> Channel <--> server3.gate++;
+        client1.gate++ <--> Channel <--> server4.gate++;
+        client1.gate++ <--> Channel <--> server5.gate++;
+        client1.gate++ <--> Channel <--> server6.gate++;
+        client1.gate++ <--> Channel <--> serverMalicious7.gate++;
+        client1.gate++ <--> Channel <--> server8.gate++;
+        client1.gate++ <--> Channel <--> server9.gate++;
 }
