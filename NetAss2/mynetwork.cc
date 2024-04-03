@@ -30,7 +30,7 @@ class Node : public cSimpleModule
 
     std::vector<int> shuffledNumbers;
     std::list<std::string> defectiveServers;
-
+    std::list<int> myList;
     // store the number of server
     int n;
 };
@@ -147,7 +147,7 @@ void Node::initialize()
     //TODO maybe change the value of the totalServers
     totalServers = n / 2 + 1;
 
-    std::list<int> myList = {10, 20, 30, 40, 50};
+    myList = {10, 20, 30, 40, 50};
     int m = n; // nb of server to begin
     int subSize = myList.size() / m;
     while (subSize < 2)
@@ -216,7 +216,7 @@ void Node::initialize()
 
 void Node::handleMessage(cMessage *msg)
 {
-    std::ofstream outputFile("example.txt", std::ios::app);
+    std::ofstream outputFile("output.txt", std::ios::app);
     // The handleMessage() method is called whenever a message arrives at the module.
 
     // am I a server ?
@@ -237,17 +237,19 @@ void Node::handleMessage(cMessage *msg)
         cMessage *answer;
 
         // am I malicious ?
+        std::string str;
         if (std::string(getName()).find("Malicious") != std::string::npos){
             // Je suis un farfadet rempli de malices
-            std::string str = std::to_string(subList[0]);
-            answer = new cMessage(str.c_str());
+            str = std::to_string(subList[0]);
 
         }
         else
         {
-            std::string str = std::to_string(*std::max_element(subList.begin(), subList.end() ));
-            answer = new cMessage(str.c_str());
+            str = std::to_string(*std::max_element(subList.begin(), subList.end() ));
         }
+        answer = new cMessage(str.c_str());
+        std::cout << "serverID : " << getId() << " - " << "Majority from subtask : " << str << std::endl;
+        outputFile << "serverID : " << getId() << " - " << "Majority from subtask : " << str << std::endl;
         // get the pointer to the sender module
         cModule *senderModule = msg->getSenderModule();
         cGate *serverGate = nullptr;
@@ -299,7 +301,7 @@ void Node::handleMessage(cMessage *msg)
             //TODO maybe change the value of the totalServers
             totalServers = n / 2 + 1;
 
-            std::list<int> myList = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+            myList = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
             int m = n; // nb of server to begin
             int subSize = myList.size() / m;
             while (subSize < 2)
@@ -388,8 +390,8 @@ void Node::handleMessage(cMessage *msg)
                     }
                 }
 
-                std::cout << "clientID : " << getId << " - " << "Majority from subtask : " << majorityValue << std::endl();
-                outputFile << "clientID : " << getId << " - " << "Majority from subtask : " << majorityValue << std::endl();
+                std::cout << "clientID : " << getId() << " - " << "Majority from subtask : " << majorityValue << std::endl;
+                //outputFile << "clientID : " << getId() << " - " << "Majority from subtask : " << majorityValue << std::endl;
                 std::stringstream s;
                 for (const auto &maxVal: maxValues) {
                     if (maxVal.first != majorityValue) {
