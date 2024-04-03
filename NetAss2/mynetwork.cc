@@ -28,6 +28,7 @@ class Node : public cSimpleModule
     int receivedResponses = 0;
 
     std::vector<int> shuffledNumbers;
+    std::list<std::string> defectiveServers;
 
     // store the number of server
     int n;
@@ -236,57 +237,99 @@ void Node::handleMessage(cMessage *msg)
     }
     else
     {
-        int receivedMax = std::stoi(msg->getName());
-        std::string senderName = msg->getSenderModule()->getName();
-        maxValues.push_back(std::make_pair(receivedMax, senderName));
+        std::string msgContent = msg->getName();
+        if (msgContent.find(":") != std::string::npos) {
+            // Le message est une liste de serveurs défectueux
+            std::stringstream ss(msgContent);
+            std::string serverInfo;
 
-        receivedResponses++;
-        std::cout << receivedResponses << std::endl;
-
-        // Vérifiez si toutes les réponses ont été reçues
-        if (receivedResponses == totalServers) {
-            std::cout << "All maximum values have been received." << std::endl;
-
-            // Determine the majority value among the max values
-            std::map<int, int> counts;
-            for (const auto& maxVal : maxValues) {
-                counts[maxVal.first]++;  // Increment the count for this max value
+            while (getline(ss, serverInfo, ',')) {
+                // Store defective Servers in the list
+                defectiveServers.push_back(serverInfo);
             }
+        }
+        else {
+            int receivedMax = std::stoi(msg->getName());
+            std::string senderName = msg->getSenderModule()->getName();
+            maxValues.push_back(std::make_pair(receivedMax, senderName));
 
-            int majorityValue = maxValues[0].first;  // Default to the first value
-            int maxCount = 0;
-            for (const auto& count : counts) {
-                if (count.second > maxCount) {
-                    majorityValue = count.first;
-                    maxCount = count.second;
+            receivedResponses++;
+            std::cout << "Response received: " << receivedResponses << std::endl;
+
+            // Verify if all the responses has been received
+            if (receivedResponses == totalServers) {
+                std::cout << "All maximum values have been received." << std::endl;
+
+                //TODO get the real Ip address
+                //cModule * host = getContainingNode(this);
+                //L3Address addr = L3AddressResolver().addressOf(host);
+
+
+                // Determine the majority value among the max values
+                std::map<int, int> counts;
+                for (const auto &maxVal: maxValues) {
+                    counts[maxVal.first]++;  // Increment the count for this max value
                 }
-            }
 
-            std::stringstream ss;
-            for (const auto& maxVal : maxValues) {
-                if (maxVal.first != majorityValue) {
-                    ss << maxVal.second << ",";
+                int majorityValue = maxValues[0].first;  // Default to the first value
+                int maxCount = 0;
+                for (const auto &count: counts) {
+                    if (count.second > maxCount) {
+                        majorityValue = count.first;
+                        maxCount = count.second;
+                    }
                 }
-            }
-            std::string nonMajorityServers = ss.str();
-            if (!nonMajorityServers.empty()) {
-                nonMajorityServers.pop_back(); // Suppress the last comma
-            }
 
-            std::cout << "Majority value: " << nonMajorityServers << std::endl;
-
-            for (int j = 0; j < gateSize("gate$o"); j++) {
-                cGate *gate = this->gate("gate$o", j);
-
-                if (gate->getType() == cGate::OUTPUT &&
-                    std::string(gate->getPathEndGate()->getOwnerModule()->getName()).find("client") != std::string::npos)
-                {
-                    cMessage *msg = new cMessage(nonMajorityServers.c_str());
-                    send(msg, gate);
+                std::stringstream s;
+                for (const auto &maxVal: maxValues) {
+                    if (maxVal.first != majorityValue) {
+                        s << maxVal.second << ",";
+                    }
                 }
-            }
+                std::string nonMajorityServers = s.str();
+                if (!nonMajorityServers.empty()) {
+                    nonMajorityServers.pop_back(); // Suppress the last comma
+                }
 
-            // additional code
+                std::stringstream ss;
+                simtime_t currentTime = simTime();
+                std::string timestamp = std::to_string(
+                        currentTime.dbl());
+
+                cModule *networkModule = getParentModule();
+                std::string ipAddress = this->gate("gate$i",0)->getPathEndGate()->getOwnerModule()->getName();  // Default Value
+                std::cout << ipAddress << std::endl;
+                if (networkModule) {
+                    std::cout << "NetworkModule is not Null" << std::endl;
+                    cModule *ipModule = networkModule->getSubmodule("ipv4");
+
+                    if (ipModule) {
+                        ipAddress = ipModule->par("ipAddress").stringValue();
+                    }
+                }
+
+                ss << timestamp << ":" << ipAddress << ":" << nonMajorityServers
+                   << ",";
+                std::string maliciousServersInfo = ss.str();
+                if (!maliciousServersInfo.empty()) {
+                    maliciousServersInfo.pop_back();
+                }
+
+                std::cout << maliciousServersInfo << std::endl;
+
+                for (int j = 0; j < gateSize("gate$o"); j++) {
+                    cGate *gate = this->gate("gate$o", j);
+
+                    if (gate->getType() == cGate::OUTPUT &&
+                        std::string(gate->getPathEndGate()->getOwnerModule()->getName()).find("client") !=
+                        std::string::npos) {
+                        cMessage *msg = new cMessage(maliciousServersInfo.c_str());
+                        send(msg, gate);
+                    }
+                }
+
+                // additional code
+            }
         }
     }
 }
